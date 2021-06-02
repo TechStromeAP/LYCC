@@ -1,0 +1,20 @@
+public without sharing class FullCalendarService {
+    
+    @TestVisible
+    @AuraEnabled
+    public static List<Event> fetchAllEvents(String roomtype){
+        if(String.isNotBlank(roomtype) && roomtype!='All'){
+            List<Event> eventList = new List<Event>();
+            eventList = [Select Id, Subject, WhatId, WhoId, 
+                         Description, Website_URL__c, EndDate, EndDateTime, OwnerId,
+                         ActivityDate, ActivityDateTime, Room_Type__c, StartDateTime, Event_Color_Code__c From Event where Room_Type__c=:roomtype OR Room_Type__c='Block' LIMIT 100];
+            return eventList;
+        }else{
+            List<Event> eventList = new List<Event>();
+            eventList = [Select Id, Subject, WhatId, WhoId, 
+                         Description, Website_URL__c, EndDate, EndDateTime, OwnerId,
+                         ActivityDate, ActivityDateTime, Room_Type__c, Event_Color_Code__c, StartDateTime From Event  LIMIT 100];
+            return eventList;
+        }
+    }
+}

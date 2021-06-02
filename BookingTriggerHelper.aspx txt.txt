@@ -1,0 +1,151 @@
+public with sharing class BookingTriggerHelper {
+    
+    public static void createevent(list<Bookings__c> BookingsList, set<String> emailset){
+        map<String, Account> contactMap = new map<String, Account>();
+        list<Event> EventList = new list<Event>();
+        for(Account con: [Select Id, Name, Website, Email__c from Account where Email__c IN: emailset]){
+            contactMap.put(con.Email__c, con);
+        }
+        for(Bookings__c book: BookingsList){
+            
+            //evt.StartDateTime = book.Requested_Date_and_Time__c;
+            //evt.EndDateTime = book.Requested_Date_and_Time__c;
+            
+            if(book.Event_Type__c == 'One-Off'){
+                Event evt = new Event();
+                
+                evt.StartDateTime = book.Requested_Date_and_Time_New__c;  
+                evt.EndDateTime = book.Requested_End_Time__c;  
+                evt.WhatId = book.Id;
+                evt.Room_Type__c = book.Room_Type__c;
+                evt.Subject = book.Organization_Name__c;
+                evt.Website_URL__c = book.Organization_URL__c;
+                
+                //if(contactMap.containsKey(book.Guest_Email__c)){
+                //  evt.Subject = contactMap.get(book.Guest_Email__c).Name;
+                // evt.Website_URL__c = contactMap.get(book.Guest_Email__c).Website!=NULL?contactMap.get(book.Guest_Email__c).Website:'';
+                
+                //}
+                EventList.add(evt);
+            }
+            if(book.Event_Type__c == 'Recurring'){
+                
+                if(book.Recurring__c == 'Daily'){
+                    
+                    Date bookingDate = book.Requested_Date__c;
+                    Date EndDateBook = book.End_Date__c;
+                    
+                    Integer number_of_Days = bookingDate.daysBetween(EndDateBook) + 1; 
+                    
+                    for(decimal i=1; i<=number_of_Days; i++){
+                        Event evt = new Event();
+                        
+                        
+                        DateTime dt_start = DateTime.newInstance(bookingDate, book.Start_Time__c);
+                        DateTime dt_end = DateTime.newInstance(bookingDate, book.End_Time__c);
+                        evt.StartDateTime = dt_start;  
+                        evt.EndDateTime = dt_end;  
+                        evt.WhatId = book.Id;
+                        evt.Room_Type__c = book.Room_Type__c;
+                        evt.Subject = book.Organization_Name__c;
+                        evt.Website_URL__c = book.Organization_URL__c;
+                        //if(contactMap.containsKey(book.Guest_Email__c)){
+                        //  evt.Subject = contactMap.get(book.Guest_Email__c).Name;
+                        // evt.Website_URL__c = contactMap.get(book.Guest_Email__c).Website!=NULL?contactMap.get(book.Guest_Email__c).Website:'';
+                        
+                        
+                        //} 
+                        EventList.add(evt);
+                        bookingDate = bookingDate.addDays(1);
+                        
+                    }
+                }
+                
+                if(book.Recurring__c == 'Weekly'){
+                    
+                    Date bookingDate = book.Requested_Date__c;
+                    Date EndDateBook = book.End_Date__c;
+                    
+                    Integer number_of_Days;
+                    
+                    if(math.mod((bookingDate.daysBetween(EndDateBook) + 1),7) == 1){
+                        number_of_Days = ((bookingDate.daysBetween(EndDateBook) + 1)/7) + 1;    
+                    }
+                    else{
+                        number_of_Days = ((bookingDate.daysBetween(EndDateBook) + 1)/7);
+                    }
+                    
+                    
+                    
+                    for(decimal i=1; i<=number_of_Days; i++){
+                        Event evt = new Event();
+                        
+                        
+                        DateTime dt_start = DateTime.newInstance(bookingDate, book.Start_Time__c);
+                        DateTime dt_end = DateTime.newInstance(bookingDate, book.End_Time__c);
+                        evt.StartDateTime = dt_start;  
+                        evt.EndDateTime = dt_end;  
+                        evt.WhatId = book.Id;
+                        evt.Room_Type__c = book.Room_Type__c;
+                        evt.Subject = book.Organization_Name__c;
+                        evt.Website_URL__c = book.Organization_URL__c;
+                        // if(contactMap.containsKey(book.Guest_Email__c)){
+                        //   evt.Subject = contactMap.get(book.Guest_Email__c).Name;
+                        //  evt.Website_URL__c = contactMap.get(book.Guest_Email__c).Website!=NULL?contactMap.get(book.Guest_Email__c).Website:'';
+                        
+                        
+                        //} 
+                        EventList.add(evt);
+                        bookingDate = bookingDate.addDays(7);    
+                        
+                    }
+                }
+                
+                if(book.Recurring__c == 'Monthly'){
+                    
+                    Date bookingDate = book.Requested_Date__c;
+                    Date EndDateBook = book.End_Date__c;
+                    
+                    Integer number_of_Days;
+                    Integer monthOfStartDate = bookingDate.Month();
+                    Integer monthOfEndDate = EndDateBook.Month();
+                    
+                    if( (EndDateBook.Day()-bookingDate.Day()) < 0 )  {
+                        number_of_Days = monthOfEndDate - monthOfStartDate;
+                    }
+                    else {
+                        number_of_Days = monthOfEndDate - monthOfStartDate + 1;
+                    } 
+                    
+                    for(decimal i=1; i<=number_of_Days; i++){
+                        Event evt = new Event();
+                        
+                        
+                        DateTime dt_start = DateTime.newInstance(bookingDate, book.Start_Time__c);
+                        DateTime dt_end = DateTime.newInstance(bookingDate, book.End_Time__c);
+                        evt.StartDateTime = dt_start;  
+                        evt.EndDateTime = dt_end;  
+                        evt.WhatId = book.Id;
+                        evt.Room_Type__c = book.Room_Type__c;
+                        evt.Subject = book.Organization_Name__c;
+                        evt.Website_URL__c = book.Organization_URL__c;
+                        //if(contactMap.containsKey(book.Guest_Email__c)){
+                        //   evt.Subject = contactMap.get(book.Guest_Email__c).Name;
+                        //   evt.Website_URL__c = contactMap.get(book.Guest_Email__c).Website!=NULL?contactMap.get(book.Guest_Email__c).Website:'';
+                        
+                        
+                        // } 
+                        EventList.add(evt);
+                        bookingDate = bookingDate.addMonths(1);
+                        
+                    }
+                }
+            }
+            
+        }
+        
+        if(EventList.size()>0){
+            database.insert(EventList, false);
+        }
+    }
+}

@@ -1,0 +1,133 @@
+public without sharing class BookingFormController {
+    
+    @TestVisible
+    @AuraEnabled
+    public static Event getEventData(String startDateTimeParam,String endDateTimeParam, String roomTypeParam, String reqDateParam){
+        
+        
+        //String datereq = reqDateParam;        
+        Date dt_req = Date.parse(reqDateParam);
+        String[] strTimeSplitStart = startDateTimeParam.split(':');
+        String[] strTimeSplitEnd = endDateTimeParam.split(':');
+        Time timeChangeStart = Time.newInstance( Integer.valueOf(strTimeSplitStart[0]) //hour
+                                                ,Integer.valueOf(strTimeSplitStart[1]) //min
+                                                ,0                                //sec
+                                                ,0);                              //ms
+        Time timeChangeEnd = Time.newInstance( Integer.valueOf(strTimeSplitEnd[0]) //hour
+                                              ,Integer.valueOf(strTimeSplitEnd[1]) //min
+                                              ,0                                //sec
+                                              ,0);                              //ms
+        
+        DateTime dt_start = DateTime.newInstance(dt_req, timeChangeStart);
+        DateTime dt_end = DateTime.newInstance(dt_req, timeChangeEnd);
+        
+        
+        
+        //***********************************************
+        if(roomTypeParam=='Chamber Room'){
+            list<Event> eventList = [Select Id, Room_Type__c,StartDateTime, EndDateTime From Event Where Room_Type__c='Chamber Room' OR Room_Type__c='Block'];
+            
+            for(Event e:eventList){
+                
+                DateTime thirtyMinEndDt = e.EndDateTime.addMinutes(30);
+                
+                if( thirtyMinEndDt>=dt_start && e.EndDateTime<dt_start ){
+                    Return eventList[0];
+                }
+                
+                if(e.StartDateTime<=dt_start && e.EndDateTime>dt_start){  
+                    Return eventList[0];
+                    
+                    
+                }
+                else if(e.StartDateTime<dt_end && e.EndDateTime>=dt_end){
+                    Return eventList[0];
+                    
+                } }}
+        //***********************************************
+        
+        if(roomTypeParam=='Hall'){
+            list<Event> eventList = [Select Id, Room_Type__c,StartDateTime, EndDateTime From Event Where Room_Type__c='Hall' OR Room_Type__c='Block'];
+            
+            for(Event e:eventList){
+                
+                DateTime thirtyMinEndDt = e.EndDateTime.addMinutes(30);
+                
+                if( thirtyMinEndDt>=dt_start && e.EndDateTime<dt_start ){
+                    Return eventList[0];
+                }
+                
+                if(e.StartDateTime<=dt_start && e.EndDateTime>dt_start){
+                    Return eventList[0]; 
+                    
+                }
+                else if(e.StartDateTime<dt_end && e.EndDateTime>=dt_end){
+                    Return eventList[0];
+                } }}
+        //***********************************************
+        
+        if(roomTypeParam=='Youth Room'){
+            list<Event> eventList = [Select Id, Room_Type__c,StartDateTime, EndDateTime From Event Where Room_Type__c='Youth Room' OR Room_Type__c='Block'];
+            
+            for(Event e:eventList){
+                
+                DateTime thirtyMinEndDt = e.EndDateTime.addMinutes(30);
+                
+                if( thirtyMinEndDt>=dt_start && e.EndDateTime<dt_start ){
+                    Return eventList[0];
+                }
+                
+                if(e.StartDateTime<=dt_start && e.EndDateTime>dt_start){
+                    Return eventList[0]; 
+                    
+                }
+                else if(e.StartDateTime<dt_end && e.EndDateTime>=dt_end){
+                    Return eventList[0];
+                } }}
+        //***********************************************
+        System.debug('Returned Null');   
+        Return null;
+    }
+    @TestVisible
+    @AuraEnabled
+    public static Contact getAccountData(String sEmail){
+        
+        list<Contact> acc = new list<Contact>();
+        if(!String.isBlank(sEmail)){
+            Acc= [Select Id from Contact Where Email =: sEmail];    
+        }
+        if (acc.size() < 1){
+            return null;
+        }
+        
+        return Acc[0];
+    }
+    
+    @TestVisible
+    @AuraEnabled
+    public static Contact getPaymentData(String sEmail){
+        list<Contact> bcc = new list<Contact>();
+        
+        list<Contact> bcc1 = new list<Contact>();
+        
+        if(!String.isBlank(sEmail)){
+            
+            Bcc= [Select Id,AccountId__c,Payment_Pending__c from Contact Where Email =: sEmail];  
+            
+            
+            if(Bcc[0].Payment_Pending__c==True){
+                return null;
+            }
+            else{
+                Bcc1= [Select Id,AccountId__c from Contact Where Email =: sEmail];
+                return Bcc1[0];
+            } 
+            
+        }
+        
+        return Bcc1[0];
+        
+        
+    }
+    
+}

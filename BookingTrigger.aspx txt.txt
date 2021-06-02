@@ -1,0 +1,35 @@
+trigger BookingTrigger on Bookings__c (before insert, after update) {
+    
+    
+    if(trigger.isInsert){
+        //list<Event> eventList = [Select Id, Room_Type__c,StartDateTime, EndDateTime From Event];
+        for(Bookings__c book: trigger.new){
+            
+            //list<Contact> contactList  = [Select Account.Id From Contact where Id =: book.Contact__c ];
+            //book.Organization__c = contactList[0].Account.Id;
+            
+        }
+    }
+    
+    if(trigger.isUpdate){
+        list<Bookings__c> BookingsList = new list<Bookings__c>();
+        set<String> emaillist = new set<String>();
+        for(Bookings__c book: trigger.new){
+            if(book.Status__c!=trigger.oldmap.get(book.id).Status__c && book.Status__c.equalsIgnoreCase('Confirmed')){
+                BookingsList.add(book);
+                emaillist.add(book.Guest_Email__c);
+            }
+            
+            if(book.Status__c!=trigger.oldmap.get(book.id).Status__c && book.Status__c.equalsIgnoreCase('Cancelled')){
+                BookingsList.add(book);
+                list<Event> eventsList = [Select Id from Event where What.Id =: book.Id];
+                delete eventsList;
+                
+            }
+            
+        }
+        if(BookingsList.size()>0 && emaillist.size()>0){
+            BookingTriggerHelper.createevent(BookingsList, emaillist);
+        }
+    }
+}

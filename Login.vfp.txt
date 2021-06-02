@@ -1,0 +1,72 @@
+<apex:page controller="BookingFormController" showHeader="false" sidebar="false" standardStylesheets="false" lightningStylesheets="true">
+    <apex:Pagemessages id="msg"/>
+    <apex:slds />
+    <apex:includeLightning />
+    <apex:includeScript value="/lightning/lightning.out.js" />
+    
+    <html>
+        <body>
+        <!--<div class="header">
+    <div class="image"></div><div class="text"></div>
+        </div>-->
+        <!--<div style="width:100%">
+            <div id="calendar" style="width:100%; padding:20px; display:none">
+            </div>
+        </div>-->
+        
+    
+    
+    <div id="LightningComponentid" /> 
+    <div id="CalendarId"/>
+    </body>
+        </html>
+    
+    <script>
+    
+    $Lightning.use("c:LYCCBookingCalender", function() {
+        
+        $Lightning.createComponent("c:lYCC_OnSite_Calendar",
+                                   { 
+                                   },
+                                   "CalendarId",
+                                   function(cmp) {
+                                       console.log('Display Lightning component Calendar in visualforce page');
+                                   });
+        
+        $Lightning.createComponent("c:LYCCBookingForm",
+                                   { 
+                                   },
+                                   "LightningComponentid",
+                                   function(cmp) {
+                                       console.log('Display Lightning component in visualforce page');
+                                   });
+        
+    });
+
+    </script>  
+        <style>
+                .header {
+    background-color: #791F40;
+}
+
+.header .image {
+    
+    background-image: url('{!URLFOR($Resource.LYCClogo,'LYCClogo.png')}');
+    background-repeat: no;
+            width: 300px;
+    height: 180px;
+}
+
+.header .text {
+    font: x-large sans-serif;
+    
+}
+
+.header .image, 
+.header .text {
+    display: inline-block;
+    vertical-align: bottom;
+}
+                
+    </style>
+</apex:page>

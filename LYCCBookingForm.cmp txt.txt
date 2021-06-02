@@ -1,0 +1,351 @@
+<aura:component
+                controller="BookingFormController"
+                implements="lightning:actionOverride,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes"
+                access="global"
+                >
+    <aura:attribute name="isGuestDataVisible" type="Boolean" default="false" />
+    
+    <aura:attribute name="paymentError" type="Boolean" default="false" />
+    <aura:attribute name="PastDateError" type="Boolean" default="false" />
+    <aura:attribute
+                    name="endDateBeforeStartDateError"
+                    type="Boolean"
+                    default="false"
+                    />
+    <aura:attribute name="cantBookError" type="Boolean" default="false" />
+    
+    <aura:attribute name="InvalidTimeError" type="Boolean" default="false" />
+    
+    <aura:attribute name="recurringCheck" type="Boolean" default="false" />
+    
+    <aura:attribute name="isNewRegisterVisible" type="Boolean" default="false" />
+    <aura:attribute name="isEmailVerify" type="Boolean" default="True" />
+    <aura:attribute name="Guestlead" type="Account" />
+    <aura:attribute name="sEmail" type="String" default="" />
+    <aura:attribute name="eventType" type="String" default="One-Off" />
+    <aura:attribute name="errorMessage" type="Boolean" default="false" />
+    <aura:attribute name="spinnerSign" type="Boolean" default="false" />
+    <aura:attribute name="startTime" type="String" default="" />
+    <aura:attribute name="endTime" type="String" default="" />
+    <aura:attribute name="GuestContact" type="Contact" />
+    <aura:attribute name="EventValue" type="Event" />
+    
+    <aura:attribute name="roomTypeParam" type="String" default="" />
+    <aura:attribute name="RDateParam" type="Date" default="" />
+    
+    <aura:attribute name="recurringValue" type="String" default="" />
+    
+    <aura:if isTrue="{! v.isEmailVerify }">
+        <div class="slds-box">
+            <lightning:badge
+                             label="Request Booking"
+                             class="slds-p-top_x-small slds-p-left-small slds-text-heading_medium"
+                             /><br /><br />
+            <div class="slds-grid">
+                <!-- <div class="">
+          <lightning:badge
+            label="Enter Email if already registered"
+            class="slds-p-top_x-small slds-p-left-small slds-text-heading_medium"
+          />
+          &nbsp;&nbsp;
+        </div>-->
+                <div class="slds-size_1-of-3">
+                    <lightning:input
+                                     name="GuestNo"
+                                     value="{!v.sEmail}"
+                                     placeholder="Please enter your registered email id"
+                                     />
+                </div>
+                <aura:if isTrue="{! v.errorMessage }"
+                         ><div class="slds-size_2-of-3"
+                               ><br></br>
+                    <div class="slds-text-color_error"
+                         >&nbsp;&nbsp; Email not registered, please complete the enquiry
+                        form on
+                        <a href="http://lycc.ie/room-hire/">http://lycc.ie/room-hire/</a>
+                    </div>
+                    </div></aura:if
+                    >
+            </div>
+            <br />
+            <div class="slds-size_2-of-3 slds-align_absolute-center">
+                <lightning:button
+                                  variant="brand"
+                                  label="Verify Email"
+                                  title="Check"
+                                  onclick="{!c.getGuestId}"
+                                  />
+                <!--<lightning:button
+          variant="brand"
+          label="Register"
+          title="Check"
+          onclick="{!c.registerGuestId}"
+        />-->
+            </div>
+        </div>
+    </aura:if>
+    
+    <!--<aura:if isTrue="{! v.spinnerSign }">
+    <div class="exampleHolder">
+      <lightning:spinner alternativeText="Loading" size="medium" />
+    </div>
+  </aura:if>-->
+    
+    <aura:if isTrue="{! v.isGuestDataVisible }">
+        <div class="slds-box">
+            <lightning:badge
+                             label="Your Information"
+                             class="slds-p-top_x-small slds-p-left-small slds-text-heading_medium"
+                             />
+            <lightning:recordViewForm
+                                      recordId="{!v.Guestlead.Id}"
+                                      objectApiName="Contact"
+                                      >
+                <br />
+                
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-2 slds-text-heading_large">
+                        <div class="slds-text-heading_large"
+                             ><lightning:outputField
+                                                     aura:id="NameState"
+                                                     fieldName="Name"
+                                                     variant="label-hidden"
+                                                     /></div>
+                    </div> </div
+                    ><br />
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning:outputField fieldName="Email" />
+                        <lightning:outputField fieldName="Phone" />
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning:outputField fieldName="Business_Name_If_Applicable__c" />
+                        <lightning:outputField fieldName="Business_Link_If_Applicable__c" />
+                    </div>
+                </div>
+                <br />
+            </lightning:recordViewForm>
+            <br />
+        </div>
+        <div class="slds-box">
+            <lightning:badge
+                             label="Create Booking Request"
+                             class="slds-p-top_x-small slds-p-left-small slds-text-heading_medium"
+                             />
+            <br /><br /><div class="slds-text-color_strong"
+                             >&nbsp;*. Any request made for time periods already booked will be
+            rejected immediately. Please go through the Calendar to know what slots
+            are available.</div
+            >
+            <lightning:recordEditForm
+                                      aura:id="newContactForm"
+                                      objectApiName="Bookings__c"
+                                      onsubmit="{!c.handleSubmitC}"
+                                      onsuccess="{!c.handleSuccessC}"
+                                      >
+                <lightning:messages /><br />
+                
+                <!--<div class="slds-hide">
+          <lightning:inputField fieldName="lastName" value="New Booking" />
+          <lightning:inputField fieldName="Account" value="" />
+          </div>-->
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning:inputField
+                                              required="true"
+                                              fieldName="Type_of_Activity__c"
+                                              />
+                        <lightning:inputField required="true" fieldName="Maximum__c" />
+                        <lightning:inputField fieldName="Any_Other_details__c" />
+                    </div>
+                    
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning:inputField
+                                              fieldName="Equipment_Furniture_Requirements__c"
+                                              />
+                    </div>
+                </div>
+                
+                <br />
+                
+                <div><p></p></div>
+                
+                <br />
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning:inputField
+                                              required="true"
+                                              fieldName="Room_Type__c"
+                                              value="{!v.roomTypeParam}"
+                                              />
+                        
+                        <lightning:select
+                                          required="true"
+                                          name="select1"
+                                          label="Event Type ?"
+                                          value="{! v.eventType }"
+                                          >
+                            <option value="One-Off">One-Off</option>
+                            <option value="Recurring">Recurring</option>
+                        </lightning:select>
+                        
+                        <lightning:inputField
+                                              required="true"
+                                              fieldName="Requested_Date__c"
+                                              value="{!v.RDateParam}"
+                                              />
+                        
+                        <!--<lightning:inputField  fieldName="Is_Recurring__c" value = "{!v.recurringCheck}" />-->
+                        
+                        <aura:if isTrue="{! v.eventType =='Recurring'}">
+                            <lightning:inputField required="true" fieldName="End_Date__c" />
+                            <lightning:inputField required="true" fieldName="Recurring__c" />
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning:input
+                                             required="true"
+                                             type="time"
+                                             min="08:45:00.000Z"
+                                             max="22:00:00.000Z"
+                                             label="Start Time"
+                                             name="StartTimeField1"
+                                             value="{! v.startTime }"
+                                             />
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning:input
+                                             required="true"
+                                             type="time"
+                                             min="08:45:00.000Z"
+                                             max="22:00:00.000Z"
+                                             label="End Time"
+                                             name="EndTimeField1"
+                                             value="{! v.endTime }"
+                                             />
+                        </div>
+                    </div>
+                    
+                    <div class="slds-col slds-size_1-of-2">
+                        <!-- <lightning:inputField required="true" fieldName="Room_Type__c" />-->
+                    </div>
+                </div>
+                
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-2"></div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning:input
+                                         type="checkbox"
+                                         label="I accept that the data submitted will be used in accordance with Leixlip Youth Premises Group CLG Privacy Policy"
+                                         name="IAcceptInput"
+                                         checked="false"
+                                         required="true"
+                                         /> </div
+                        ></div>
+                
+                <br />
+                <aura:if isTrue="{! v.paymentError }">
+                    <br /><div align="center" class="slds-text-color_error"
+                               >&nbsp;*. You have Payment pending for you previous Bookings. Please
+                    Clear all dues before any more booking requests.</div
+                    ></aura:if
+                    >
+                
+                <aura:if isTrue="{! v.endDateBeforeStartDateError }">
+                    <br /><div align="center" class="slds-text-color_error"
+                               >&nbsp;*. End Date cannot be before Start Date.</div
+                    ></aura:if
+                    >
+                
+                <aura:if isTrue="{! v.PastDateError }">
+                    <br /><div align="center" class="slds-text-color_error"
+                               >&nbsp;*. The selected date is in Past. Not a valid date. Select a
+                    proper date to make request.</div
+                    >
+                </aura:if>
+                <aura:if isTrue="{! v.InvalidTimeError }">
+                    <br /><div align="center" class="slds-text-color_error"
+                               >&nbsp;*. The End Time selected is before the Start Date which is
+                    Invalid.</div
+                    >
+                </aura:if>
+                <aura:if isTrue="{! v.cantBookError }">
+                    <br /><div align="center" class="slds-text-color_error"
+                               >&nbsp;*. Time slot already booked, please check the calendar and
+                    try again If you are having difficulty making a booking please
+                    contact us info@lycc.ie</div
+                    ><br /><div align="center" class="slds-text-color_error"
+                                >&nbsp;*. OR Please make sure you are not trying to request a
+                    booking before 30 Minutes of the end of an event.</div
+                    >
+                </aura:if>
+                <br />
+                
+                <div class="slds-size_2-of-3 slds-align_absolute-center">
+                    <lightning:button
+                                      variant="brand"
+                                      type="submit"
+                                      label="Request Booking"
+                                      />
+                    
+                    <aura:if isTrue="{! v.spinnerSign }">
+                        <div>
+                            <lightning:spinner alternativeText="Loading" size="medium" />
+                        </div>
+                    </aura:if>
+                </div>
+            </lightning:recordEditForm>
+        </div>
+    </aura:if>
+    
+    <aura:if isTrue="{! v.isNewRegisterVisible }">
+        <div class="slds-box">
+            <!--<div class="slds-grid">-->
+            <div class="">
+                <lightning:badge
+                                 label="Register new User"
+                                 class="slds-p-top_x-small slds-p-left-small slds-text-heading_medium"
+                                 />
+                &nbsp;&nbsp;
+            </div></div
+            ><!--</div>-->
+        
+        <lightning:recordEditForm
+                                  aura:id="newLeadForm"
+                                  objectApiName="Account"
+                                  onsubmit="{!c.handleSubmit}"
+                                  onsuccess="{!c.handleSuccess}"
+                                  >
+            <lightning:messages />
+            
+            <br />
+            
+            <div class="slds-grid">
+                <div class="slds-col slds-size_1-of-2">
+                    <label for="NameState">Name</label
+                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <lightning:inputfield
+                                          aura:id="NameState"
+                                          fieldName="Name"
+                                          variant="label-hidden"
+                                          />
+                </div> </div
+                ><br />
+            <div class="slds-grid">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning:inputField fieldName="Email__c" required="true" />
+                    <lightning:inputField fieldName="Phone__c" required="true" />
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning:inputField fieldName="Business_Name_If_Applicable__c" />
+                    <lightning:inputField fieldName="Business_Link_If_Applicable__c" />
+                </div>
+            </div>
+            <br />
+            
+            <div class="slds-size_2-of-3 slds-align_absolute-center">
+                <lightning:button variant="brand" type="submit" label="Register" />
+            </div>
+        </lightning:recordEditForm>
+    </aura:if>
+    <!--<img src="{!$Resource.Footer}"/>-->
+</aura:component>

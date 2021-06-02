@@ -1,0 +1,182 @@
+({
+    onload: function(component, event, helper) {
+        component.set("v.isNewRegisterVisible", "True");
+        component.set("v.isEmailVerify", "false");
+    },
+    
+    registerGuestId: function(component, event, helper) {
+        component.set("v.isNewRegisterVisible", "True");
+        component.set("v.isEmailVerify", "false");
+    },
+    
+    getGuestId: function(component, event, helper) {
+        component.set("v.spinnerSign", "True");
+        
+        var action = component.get("c.getAccountData");
+        
+        action.setParams({
+            sEmail: component.get("v.sEmail")
+        });
+        
+        action.setCallback(this, function(a) {
+            var state = a.getState(); // get the response state
+            if (state == "SUCCESS") {
+                component.set("v.Guestlead", a.getReturnValue());
+                
+                if (component.get("v.Guestlead") != null) {
+                    //alert(a.getReturnValue());
+                    
+                    component.set("v.isNewRegisterVisible", "false");
+                    component.set("v.isGuestDataVisible", "True");
+                    component.set("v.isEmailVerify", "false");
+                    component.set("v.spinnerSign", "false");
+                } else {
+                    component.set("v.spinnerSign", "false");
+                    component.set("v.errorMessage", "True");
+                }
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    
+    handleSubmit: function(component, event, helper) {
+        event.preventDefault(); // Prevent default submit
+        var fields = event.getParam("fields");
+        
+        component.find("newLeadForm").submit(fields); // Submit form
+    },
+    handleSuccess: function(component, event, helper) {
+        // stop spinner
+        component.set("v.showSpinner", false);
+        
+        window.location = "http://devsandbox-lyccbookings.cs89.force.com/";
+    },
+    
+    handleSubmitC: function(component, event, helper) {
+        event.preventDefault(); // Prevent default submit
+        
+        component.set("v.spinnerSign", "True");
+        
+        var lookUpIdContact = "";
+        var lookUpIdOrg = "";
+        
+        var eventType = component.get("v.eventType");
+        var startTimeVar = component.get("v.startTime");
+        var endTimeVar = component.get("v.endTime");
+        var roomTypevar = component.get("v.roomTypeParam");
+        var reqDateparamVar = component.get("v.RDateParam");
+        
+        var reqDt = String(reqDateparamVar);
+        var stTime = String(startTimeVar);
+        var enTime = String(endTimeVar);
+        
+        var convDate = reqDt.split("-");
+        var newdate = convDate[1] + "/" + convDate[2] + "/" + convDate[0];
+        var paramReqDate = String(newdate);
+        
+        var fields = event.getParam("fields");
+        var today = $A.localizationService.formatDate(new Date(), "YYYY-MM-DD");
+        
+        if (fields.Requested_Date__c > fields.End_Date__c) {
+            component.set("v.InvalidTimeError", "false");
+            component.set("v.PastDateError", "false");
+            component.set("v.spinnerSign", "false");
+            component.set("v.endDateBeforeStartDateError", "True");
+            return;
+        }
+        
+        if (fields.Requested_Date__c < today) {
+            component.set("v.InvalidTimeError", "false");
+            component.set("v.PastDateError", "True");
+            component.set("v.spinnerSign", "false");
+            component.set("v.endDateBeforeStartDateError", "false");
+            return;
+        }
+        
+        if (startTimeVar > endTimeVar) {
+            component.set("v.PastDateError", "false");
+            component.set("v.InvalidTimeError", "True");
+            component.set("v.spinnerSign", "false");
+            component.set("v.endDateBeforeStartDateError", "false");
+            return;
+        }
+        
+        console.log("Calling Class");
+        var action1 = component.get("c.getEventData");
+        action1.setParams({
+            startDateTimeParam: stTime,
+            endDateTimeParam: enTime,
+            roomTypeParam: roomTypevar,
+            reqDateParam: paramReqDate
+        });
+        
+        action1.setCallback(this, function(a) {
+            console.log("In Action");
+            var state1 = a.getState(); // get the response state
+            if (state1 == "SUCCESS") {
+                component.set("v.EventValue", a.getReturnValue());
+                console.log("In Console");
+                if (component.get("v.EventValue") != null) {
+                    console.log("Not Null");
+                    component.set("v.InvalidTimeError", "false");
+                    component.set("v.PastDateError", "false");
+                    component.set("v.spinnerSign", "false");
+                    component.set("v.endDateBeforeStartDateError", "false");
+                    component.set("v.cantBookError", "True");
+                    component.set("v.spinnerSign", "false");
+                }
+                if (component.get("v.EventValue") == null) {
+                    console.log("In Else");
+                    
+                    var action = component.get("c.getPaymentData");
+                    console.log("Action created");
+                    action.setParams({
+                        sEmail: component.get("v.sEmail")
+                    });
+                    
+                    console.log("Param set");
+                    
+                    action.setCallback(this, function(b) {
+                        console.log("inside call back");
+                        var state = b.getState(); // get the response state
+                        if (state == "SUCCESS") {
+                            console.log("Success");
+                            component.set("v.GuestContact", b.getReturnValue());
+                            
+                            if (component.get("v.GuestContact") != null) {
+                                //alert(a.getReturnValue().Id);
+                                lookUpIdContact = b.getReturnValue().Id;
+                                lookUpIdOrg = b.getReturnValue().AccountId__c;
+                                console.log("Success", lookUpIdOrg);
+                                component.set("v.paymentError", "false");
+                                //component.set("v.spinnerSign", "false");
+                                
+                                fields.Event_Type__c = eventType;
+                                fields.Start_Time__c = startTimeVar;
+                                fields.End_Time__c = endTimeVar;
+                                fields.Contact__c = lookUpIdContact;
+                                fields.Organization__c = lookUpIdOrg;
+                                fields.Status__c = "Pending";
+                                
+                                window.location = "http://lycc.ie/thank-you/";
+                                component.find("newContactForm").submit(fields);
+                                //alert(lookUpIdContact);
+                            } else {
+                                component.set("v.spinnerSign", "false");
+                                component.set("v.paymentError", "True");
+                            }
+                        }
+                    });
+                    $A.enqueueAction(action);
+                }
+            }
+        });
+        $A.enqueueAction(action1);
+    },
+    handleSuccessC: function(component, event, helper) {
+        // stop spinner
+        component.set("v.showSpinner", false);
+        
+        component.set("v.spinnerSign", "false");
+    }
+});
